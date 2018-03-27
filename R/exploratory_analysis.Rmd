@@ -11,7 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
-d <- read_csv("train.csv")
+library(here)
+d <- read_csv(here("train.csv"))
 d
 ```
 
@@ -89,6 +90,7 @@ Note that there is an inherent ordering in the session observations, so it might
 ud <- d %>%
   group_by(sessionID) %>%
   mutate(row_id = row_number()) %>%
+  mutate(session_nums = max(row_id)) %>%
   filter(row_id == max(row_id)) %>%
   ungroup() %>%
   select(-row_id)
@@ -134,6 +136,7 @@ dater <- function(new_hours, new_day) {
   day(fake_date) <- new_day
   as.POSIXct(fake_date)
 }
+
 ud %>%
   mutate(time = dater(hour, weekday)) %>%
   select(sessionID, time)
@@ -151,6 +154,7 @@ ggplot(orders, aes(x = time, y = orders, group = order, color = order)) +
   geom_line() +
   geom_smooth()
 ```
+
 
 
 
