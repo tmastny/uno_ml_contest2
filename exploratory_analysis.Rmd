@@ -1,0 +1,164 @@
+---
+title: "exploratory_analysis"
+author: "Tim Mastny"
+date: "March 26, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+d <- read_csv("train.csv")
+d
+```
+
+Total order
+
+```{r}
+table(d$order)
+```
+
+
+Grouping by session id
+
+```{r}
+d %>%
+  group_by(sessionID) %>%
+  count(order) %>% 
+  ungroup() %>%
+  count(order)
+```
+
+cart steps and order
+
+```{r}
+d %>%
+  group_by(cartStep) %>%
+  count(order)
+```
+
+So we would like to include it as a predictor.
+
+The question is, how do you work with conditional data, rather than missing data?
+
+```{r}
+d
+```
+
+```{r}
+unique(d$availability)
+```
+
+
+Some values are actually missing?
+
+```{r}
+d %>%
+  filter(sessionID == 2)
+```
+
+
+
+## What to predict
+
+Note that while our data is serialized, with multiple sessionIDs, our final prediction should be grouped on session id.
+
+Idea: create a new feature that is a count of the number of session IDs present.
+
+Note that there are many session IDs with many observations.
+
+```{r}
+table(d$sessionID)[table(d$sessionID) > 75]
+```
+
+```{r}
+d %>%
+  filter(sessionID == 1130)
+```
+
+This is a good example, where the final observation of the session contains the final cart step, etc. Need a way to aggregate features into final step. 
+
+Note that there is an inherent ordering in the session observations, so it might make sense to just remove all but the last one. 
+
+## How to subset data
+
+```{r}
+ud <- d %>%
+  group_by(sessionID) %>%
+  mutate(row_id = row_number()) %>%
+  filter(row_id == max(row_id)) %>%
+  ungroup() %>%
+  select(-row_id)
+```
+
+
+
+## Timeline of orders
+
+Let's look at the orders over time. For this it also makes sense to clean the data in that manner.
+
+```{r}
+unique(d$hour)
+unique(d$weekday)
+```
+
+```{r}
+library(lubridate)
+hours(23)
+days(5)
+hours(6) + days(5)
+```
+
+```{r}
+# this doesn't group_by correctly. Let's use dates instead. 
+ud %>%
+  mutate(time = hours(hour) + days(weekday)) %>%
+  select(sessionID, time, order)
+```
+
+```{r}
+ses_date <- ymd("1999/1/1")
+ses_date
+hour(ses_date) <- 1
+day(ses_date) <- 5
+ses_date
+```
+
+```{r}
+dater <- function(new_hours, new_day) {
+  fake_date <- ymd("1999/1/1")
+  hour(fake_date) <- new_hours
+  day(fake_date) <- new_day
+  as.POSIXct(fake_date)
+}
+ud %>%
+  mutate(time = dater(hour, weekday)) %>%
+  select(sessionID, time)
+```
+```{r}
+orders <- ud %>%
+  mutate(time = dater(hour, weekday)) %>% 
+  group_by(time, order) %>%
+  summarise(orders = n()) %>%
+  group_by(time)
+```
+
+```{r}
+ggplot(orders, aes(x = time, y = orders, group = order, color = order)) +
+  geom_line() +
+  geom_smooth()
+```
+
+
+
+
+
+
+
+
+
+
+
