@@ -1,0 +1,144 @@
+---
+title: "Impute with Recipes"
+author: "Tim Mastny"
+date: "March 27, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(lubridate)
+library(tidyverse)
+library(here)
+
+d <- read_csv(here("data", "train.csv"))
+
+source(here("R", "cleaners.R"))
+```
+
+
+```{r}
+ud <- d %>%
+  unique_sessioner()
+```
+
+
+Let's test out various ways to impute missing data.
+
+
+
+## Dummy
+
+Dummifying `availability` might help to deal with those NAs. They indictor variable there will be zero for every category. 
+
+```{r}
+library(recipes)
+rec_obj <- recipe(order ~ ., data = ud) %>%
+  step_modeimpute(availability) %>%
+  step_dummy(availability) %>%
+  prep(training = ud)
+```
+
+```{r}
+training <- bake(rec_obj, newdata = ud)
+training
+```
+
+```{r}
+table(ud$availability, exclude = NULL)
+```
+
+```{r}
+rec_obj2 <- recipe(order ~ ., data = ud) %>%
+  step_knnimpute(availability) %>%
+  step_dummy(availability) %>%
+  prep(training = ud)
+```
+
+```{r}
+training2 <- bake(rec_obj, newdata = ud)
+training2
+```
+
+```{r}
+any(is.na(ud$cartStep))
+```
+
+## Doubles
+
+Time: roughly 30 minutes
+
+```{r}
+library(recipes)
+rec_obj <- recipe(order ~ ., data = ud) %>%
+  step_bagimpute(-all_nominal()) %>%
+  step_modeimpute(all_nominal()) %>%
+  prep(training = ud)
+```
+
+Gives following error:
+
+> Error in gower_work(x = x, y = y, pair_x = pair_x, pair_y = pair_y, n = n, : STRING_ELT() can only be applied to a 'character vector', not a 'integer'
+
+```{r}
+training <- bake(rec_obj, newdata = ud)
+training
+```
+
+```{r}
+tidy(rec_obj)
+```
+
+Awesome! Bag impute seems to work!
+
+```{r}
+nrow(training %>% na.omit())
+```
+
+```{r}
+any(is.na(ud$order))
+```
+
+Try all with bagged. Might be better for `integer` types.
+
+```{r}
+rec_obj3 <- recipe(order ~ ., data = ud) %>%
+  step_bagimpute(all_predictors()) %>%
+  prep(training = ud)
+```
+
+```{r}
+training3 <- bake(rec_obj3, newdata = ud)
+training3
+```
+
+## list of steps
+
+Send list of steps to cooking function to process data in purrr loop.
+
+## Customer id
+
+Note that we probability shouldn't impute costumer id. Create a unique value for each missing observation.
+
+```{r}
+length(unique(ud$customerID))
+```
+
+```{r}
+length(ud$customerID[is.na(ud$customerID)])
+```
+
+Should customer ID be a factor? Maybe make all NAs 0?
+
+```{r}
+min(ud$customerID, na.rm = TRUE)
+```
+
+
+
+
+

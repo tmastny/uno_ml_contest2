@@ -1,0 +1,129 @@
+---
+title: "NA Explorer"
+author: "Tim Mastny"
+date: "March 27, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r}
+library(tidyverse)
+library(here)
+library(lubridate)
+d <- read_csv(here("train.csv"))
+
+source(here("R", "cleaners.R"))
+```
+
+```{r}
+ud <- d %>%
+  unique_sessioner() %>%
+  dater()
+```
+
+Need to find a way to handle the NAs.
+
+## Notes
+
+NAs don't imply no order:
+
+```{r}
+ud %>%
+  filter(sessionID == 2)
+```
+
+Also note that `unique_sessioner` isn't sufficient. For example, chosing the last entry of `sessionID` 2 misses the max `cartStep`:
+
+```{r}
+d %>%
+  filter(sessionID == 2)
+```
+
+Let's do some tests:
+
+```{r}
+vec <- c(NA, NA, 2, NA)
+max(vec)
+max(vec, na.rm = TRUE)
+
+vec2 <- c(NA, NA, NA, NA)
+max(vec2)
+max(vec2, na.rm = TRUE)
+
+ifelse(max(vec2, na.rm = TRUE) == -Inf, NA, max(vec2, na.rm = TRUE))
+```
+
+```{r}
+ifelse(max(vec, na.rm = TRUE) == -Inf, NA, max(vec, na.rm = TRUE))
+```
+
+Alternative:
+
+```{r}
+ifelse(all(is.na(vec)), NA, max(vec, na.rm = TRUE))
+```
+
+
+## Uniquer test
+
+I think I can us mutate_if
+
+```{r eval=FALSE}
+  group_by(sessionID) %>%
+  mutate(row_id = row_number()) %>%
+  mutate(session_nums = max(row_id)) %>%
+  filter(row_id == max(row_id)) %>%
+  ungroup() %>%
+  select(-row_id)
+```
+
+
+```{r}
+test_df <- d %>%
+  group_by(sessionID) %>%
+  mutate(row_id = row_number()) %>%
+  mutate(session_nums = max(row_id)) %>%
+  mutate_if(
+    ~any(is.na(.)), 
+    ~ifelse(all(is.na(.)), NA, max(., na.rm = TRUE))) %>%
+  filter(row_id == max(row_id)) %>%
+  ungroup() %>%
+  select(-row_id)
+```
+
+```{r}
+test_df %>%
+  filter(sessionID == 2)
+```
+
+```{r}
+d %>%
+  filter(sessionID == 2)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

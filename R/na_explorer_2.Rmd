@@ -1,0 +1,101 @@
+---
+title: "NA Explorer"
+author: "Tim Mastny"
+date: "March 27, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r}
+library(lubridate)
+library(tidyverse)
+library(here)
+
+d <- read_csv(here("train.csv"))
+
+source(here("R", "cleaners.R"))
+```
+
+In the previous explorer, we noticed that we need a max argument. Since then, I've updated `unique_sessioner` to accomdate this information:
+
+```{r}
+ud <- d %>%
+  unique_sessioner()
+```
+
+```{r}
+ud
+```
+
+## Fixing NAs
+
+Can we replace some NAs with zeros?
+
+```{r}
+ud %>%
+  select_if(~any(is.na(.)) & is.double(.))
+```
+
+```{r}
+ud %>%
+  select_if(~any(is.na(.)) & is.double(.)) %>%
+  summarise_all(min, na.rm = TRUE)
+```
+
+So there are instances where doubles are zero, but not NA. Why?
+
+```{r}
+ud %>%
+  filter(clickMin == 0)
+```
+
+Somehow we have an example where an item was added to the cart (clickCount == 1), but there is no click min or max
+
+```{r}
+ud %>%
+  filter(is.na(clickMin))
+```
+
+```{r}
+ud %>%
+  filter(sessionID == 66)
+```
+
+This means I may need to do conditional impute. If the item was sold, can we impute clickMin? Otherwise, zero?
+
+This is not quite possible: `recipes` give an option to impute only certain columns of the data, but not for certain row values.
+
+```{r}
+d %>%
+  filter(sessionID == 66)
+```
+
+## Observation
+
+If `clickMin` is NA, so are all the other click attributes
+
+```{r}
+ud %>%
+  filter_if(is.double, any_vars(is.na(.)))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
