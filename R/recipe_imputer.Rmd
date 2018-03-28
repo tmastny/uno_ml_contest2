@@ -138,7 +138,52 @@ Should customer ID be a factor? Maybe make all NAs 0?
 min(ud$customerID, na.rm = TRUE)
 ```
 
+## NAs
 
+
+```{r}
+training
+```
+
+```{r}
+training %>%
+  fix_customerid() %>%
+  filter(is.na(customerID))
+```
+
+
+```{r}
+library(recipes)
+rec <- recipe(order ~ ., data = training) %>%
+  step_modeimpute(status, availability) %>%
+  prep(training = training)
+
+dat <- bake(rec, newdata = training)
+dat
+```
+
+```{r}
+a <- map_lgl(dat, ~any(is.na(.)))
+a[a]
+```
+
+```{r}
+a <- map_lgl(train, ~any(is.na(.)))
+a[a]
+```
+```{r}
+a <- map_lgl(training, ~any(is.na(.)))
+a[a]
+```
+```{r}
+training %>%
+  filter(is.na(customerID))
+```
+
+```{r}
+train %>%
+  filter(is.na(customerID)) 
+```
 
 
 
