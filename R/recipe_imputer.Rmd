@@ -185,5 +185,9 @@ train %>%
   filter(is.na(customerID)) 
 ```
 
+```{r}
+train
+```
+
 
 

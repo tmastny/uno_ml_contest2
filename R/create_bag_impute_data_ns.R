@@ -21,14 +21,15 @@ test %<>%
 bag_impute_rec <- recipe(order ~ ., data = train) %>%
   step_modeimpute(status, availability) %>%
   step_bagimpute(all_predictors(), -status, -availability, -customerID) %>%
-  step_center() %>%
-  step_scale() %>%
+  step_dummy(status, availability) %>%
+  step_center(all_predictors(), -contains("status"), -contains("availability")) %>% # but not availability and status
+  step_scale(all_predictors(), -contains("status"), -contains("availability")) %>%
   prep(training = train)
 
 train <- bake(bag_impute_rec, newdata = train)
 test <- bake(bag_impute_rec, newdata = test)
 
-write.csv(train, here("data", "bagim-ns-train.csv"))
-write.csv(test, here("data", "bagim-ns-test.csv"))
+write.csv(train, here("data", "bagim-dcs-train.csv"))
+write.csv(test, here("data", "bagim-dcs-test.csv"))
 
 
