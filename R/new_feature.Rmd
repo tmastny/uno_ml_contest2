@@ -1,0 +1,66 @@
+---
+title: "Looking at the data more"
+author: "Tim Mastny"
+date: "March 27, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(here)
+source(here("R", "utilities.R"))
+
+d <- read_csv(here("data", "train.csv"))
+```
+
+```{r}
+d %>%
+  filter(sessionID == 3423)
+```
+```{r}
+d %>%
+  filter(sessionID == 3423) %>%
+  mutate(row_id = row_number()) %>%
+  mutate(session_nums = max(row_id)) %>%
+  mutate(ave_item_cost = cartTotal / cartCount)
+```
+
+
+```{r}
+ud <- d %>%
+  unique_sessioner() %>%
+  fix_customerid()
+```
+
+```{r}
+ud %>%
+  filter(sessionID == 3423)
+```
+
+## Durations
+
+Should add max, min, and average session durations.
+
+```{r}
+source(here("R", "utilities.R"))
+ud2 <- d %>%
+  unique_sessioner2()
+```
+
+```{r}
+ud2 %>%
+  filter(sessionID == 3423)
+```
+
+## Create dummy variables
+
+On the `salutation` variable.
+
+
+
+

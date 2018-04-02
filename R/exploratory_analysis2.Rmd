@@ -1,0 +1,56 @@
+---
+title: "Looking at the data more"
+author: "Tim Mastny"
+date: "March 27, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(here)
+source(here("R", "utilities.R"))
+
+d <- read_csv(here("data", "train.csv"))
+```
+
+```{r}
+d %>%
+  filter(sessionID == 3)
+```
+
+
+```{r}
+ud <- d %>%
+  unique_sessioner() %>%
+  fix_customerid()
+```
+
+```{r}
+ud %>%
+  filter(sessionID == 3)
+```
+
+
+
+```{r}
+library(recipes)
+rec <- recipe(order ~ ., data = ud) %>%
+  prep(data = ud)
+ud <- bake(rec, newdata = ud)
+```
+
+
+
+```{r}
+library(missForest)
+im <- missForest(as.data.frame(ud))
+```
+
+
+
+
