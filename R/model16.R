@@ -18,7 +18,7 @@ control <- trainControl(method = 'cv', number = 5,
 model <- train(
   order ~ .,
   data = training,
-  method = 'gbm ',
+  method = 'gbm',
   trControl = control
 )
 

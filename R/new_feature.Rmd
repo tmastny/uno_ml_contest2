@@ -22,14 +22,6 @@ d <- read_csv(here("data", "train.csv"))
 d %>%
   filter(sessionID == 3423)
 ```
-```{r}
-d %>%
-  filter(sessionID == 3423) %>%
-  mutate(row_id = row_number()) %>%
-  mutate(session_nums = max(row_id)) %>%
-  mutate(ave_item_cost = cartTotal / cartCount)
-```
-
 
 ```{r}
 ud <- d %>%
@@ -40,6 +32,14 @@ ud <- d %>%
 ```{r}
 ud %>%
   filter(sessionID == 6)
+```
+
+```{r}
+d %>%
+  filter(sessionID == 3423) %>%
+  mutate(row_id = row_number()) %>%
+  mutate(session_nums = max(row_id)) %>%
+  mutate(ave_item_cost = cartTotal / cartCount)
 ```
 
 ## Durations

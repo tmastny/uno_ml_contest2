@@ -32,7 +32,7 @@ bag_impute_rec <- recipe(order ~ ., data = train) %>%
     all_predictors(), 
     -contains("status"), 
     -contains("availability"),
-    -contains("salutation")) %>%
+    -contains("salutation")) %>% 
   prep(training = train)
 
 train <- bake(bag_impute_rec, newdata = train)
