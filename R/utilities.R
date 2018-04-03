@@ -25,7 +25,8 @@ unique_sessioner2 <- function(data) {
                                   NA, min(cartTotal, na.rm = TRUE))) %>%
     mutate(ave_cartTotal = ifelse(all(is.na(cartTotal)), 
                                   NA, mean(cartTotal, na.rm = TRUE))) %>%
-    mutate(clicks_per_sec = clickCount / duration) %>%
+    mutate(clicks_per_sec = ifelse(max(duration) == 0, 
+                                   0, max(clickCount) / max(duration))) %>%
     mutate(ave_item_cost = max(cartTotal) / max(cartCount)) %>%
     mutate_if(
       ~any(is.na(.)), 

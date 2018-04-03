@@ -39,7 +39,7 @@ ud <- d %>%
 
 ```{r}
 ud %>%
-  filter(sessionID == 3423)
+  filter(sessionID == 6)
 ```
 
 ## Durations
@@ -62,5 +62,16 @@ ud2 %>%
 On the `salutation` variable.
 
 
+## Check out new features here
+
+```{r}
+train <- read.csv(here("data", "nf-bagim-train.csv"))
+train
+```
+
+```{r}
+test <- read.csv(here("data", "nf-bagim-test.csv"))
+test
+```
 
 
