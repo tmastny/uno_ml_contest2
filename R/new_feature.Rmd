@@ -53,9 +53,13 @@ ud2 <- d %>%
 ```
 
 ```{r}
-ud2 %>%
-  filter(sessionID == 3423)
+ud2
 ```
+
+```{r}
+unique(ud2$cartStep)
+```
+
 
 ## Create dummy variables
 
@@ -65,7 +69,7 @@ On the `salutation` variable.
 ## Check out new features here
 
 ```{r}
-train <- read.csv(here("data", "nf-bagim-train.csv"))
+train <- read.csv(here("data", "nf-zero-train.csv"))
 train
 ```
 
@@ -73,5 +77,86 @@ train
 test <- read.csv(here("data", "nf-bagim-test.csv"))
 test
 ```
+
+
+## na_handler
+
+```{r}
+library(tidyverse)
+library(here)
+source(here("R", "utilities.R"))
+
+d <- read_csv(here("data", "train.csv"))
+```
+
+```{r}
+ud3 <- d %>%
+  unique_sessioner2()
+```
+
+```{r}
+ud3 %>%
+  select(salutation, status, availability)
+```
+
+```{r}
+unique(ud3$salutation)
+```
+
+
+```{r}
+ud3 %>%
+  mutate_if(
+    is.character,
+    ~ifelse(is.na(.), "other", .)
+  ) %>%
+  mutate_if(
+    is.numeric,
+    ~ifelse(is.na(.), 0, .)
+  )
+```
+
+```{r}
+source(here("R", "utilities.R"))
+ud3 %>%
+  na_handler()
+```
+
+
+
+```{r}
+ud3 %>%
+  select_if(~!is.character(.))
+```
+
+```{r}
+fil_pred_test <- testing %>%
+  mutate(pred = predict(model, newdata = .)) %>%
+  group_by(sessionID, pred) %>%
+  summarise(order_count = n()) %>%
+  spread(pred, order_count, fill = 0) %>%
+  mutate(order = ifelse(y >= n, "y", "n")) %>%
+  select(sessionID, order)
+fil_pred_test
+```
+Count number of ys. See if it is more than half of the obersvations
+
+```{r}
+d <- filtered_predict(model, testing)
+d
+```
+
+```{r}
+identical(d, fil_pred_test)
+which(d$order != fil_pred_test$order)
+```
+
+
+
+
+
+
+
+
 
 

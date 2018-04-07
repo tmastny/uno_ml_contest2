@@ -36,6 +36,18 @@ unique_sessioner2 <- function(data) {
     select(-row_id)
 }
 
+na_handler <- function(data) {
+  data %>%
+    mutate_if(
+      is.character,
+      ~ifelse(is.na(.), "other", .)
+    ) %>%
+    mutate_if(
+      is.numeric,
+      ~ifelse(is.na(.), 0, .)
+    )
+}
+
 fix_customerid <- function(data) {
   data %>%
     mutate(customerID = ifelse(is.na(customerID), 0, customerID))
@@ -52,10 +64,32 @@ dater <- function(data) {
     mutate(time = dater_(hour, weekday))
 }
 
-submit <- function(model, data) {
-  write_csv(data.frame(sessionID = 50001:55111,
-                       order = predict(model, newdata = data)),
-            here("subs", paste0("sub_", 1 + length(list.files("subs")))))
+submit <- function(model, data, filtered = FALSE) {
+  if (filtered) {
+    newdata <- filtered_predict(model, data)
+  } else {
+    newdata <- data.frame(
+      sessionID = 50001:55111,
+      order = predict(model, newdata = data)
+    )
+  }
+  
+  write_csv(
+    newdata,
+    here("subs", paste0("sub_", 1 + length(list.files("subs"))))
+  )
 }
+
+filtered_predict <- function(model, newdata) {
+  newdata %>%
+    mutate(pred = predict(model, newdata = .)) %>%
+    group_by(sessionID, pred) %>%
+    summarise(order_count = n()) %>%
+    spread(pred, order_count, fill = 0) %>%
+    mutate(order = ifelse(y >= n, "y", "n")) %>%
+    select(sessionID, order)
+}
+
+
 
 
